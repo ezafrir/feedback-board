@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EPA Feedback Board</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; }
+
+  :root {
+    --bg: #14161C;
+    --surface: #1D2028;
+    --surface-raised: #252933;
+    --line: #333846;
+    --ink: #ECEDF0;
+    --muted: #9297A5;
+    --dim: #676D7C;
+
+    --tag-team: #C4738A;
+    --tag-team-bg: #33222A;
+    --tag-insta: #6FA8D6;
+    --tag-insta-bg: #1E2A36;
+    --tag-program: #7FBE8C;
+    --tag-program-bg: #1E2E23;
+    --tag-other: #C9A24E;
+    --tag-other-bg: #302A1A;
+
+    --good: #7FBE8C;
+    --brass: #C9A24E;
+  }
+
+  #epaBoard {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  .masthead {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .masthead h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px 0;
+    color: var(--ink);
+  }
+  .masthead p {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--muted);
+    max-width: 48ch;
+    line-height: 1.5;
+  }
+  .masthead .mod-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--brass);
+    border: 1px solid var(--brass);
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .toolbar-buttons { display: flex; gap: 10px; }
+
+  button.create-btn {
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.create-btn:hover { background: var(--brass); }
+
+  button.announce-btn {
+    background: transparent;
+    color: var(--brass);
+    border: 1px solid var(--brass);
+    border-radius: 20px;
+    padding: 9px 18px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.announce-btn:hover { background: rgba(201,162,78,0.12); }
+
+  .sort-select {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 6px;
+    padding: 7px 10px;
+  }
+
+  /* Modal (compose / announcement) */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal {
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 24px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    color: var(--ink);
+  }
+
+  .field-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  textarea, input[type="text"] {
+    width: 100%;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 11px 12px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14.5px;
+    color: var(--ink);
+    resize: vertical;
+    margin-bottom: 16px;
+  }
+  textarea::placeholder, input::placeholder { color: var(--dim); }
+  textarea:focus, input[type="text"]:focus,
+  select:focus, button:focus-visible {
+    outline: 2px solid var(--brass);
+    outline-offset: 1px;
+  }
+  textarea { min-height: 90px; line-height: 1.5; }
+
+  .category-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .cat-chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .cat-chip[data-cat="Team Dynamics"].active { background: var(--tag-team-bg); border-color: var(--tag-team); color: var(--tag-team); }
+  .cat-chip[data-cat="Instagram & Resources"].active { background: var(--tag-insta-bg); border-color: var(--tag-insta); color: var(--tag-insta); }
+  .cat-chip[data-cat="Program Ideas"].active { background: var(--tag-program-bg); border-color: var(--tag-program); color: var(--tag-program); }
+  .cat-chip[data-cat="Other"].active { background: var(--tag-other-bg); border-color: var(--tag-other); color: var(--tag-other); }
+
+  .toggle-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+  .toggle-row:first-of-type { border-top: none; }
+  .toggle-row input[type="checkbox"] {
+    margin-top: 3px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--brass);
+    flex-shrink: 0;
+  }
+  .toggle-row label { font-size: 13.5px; line-height: 1.45; color: var(--ink); }
+  .toggle-row .sub { display: block; color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
+  .privacy-note {
+    background: rgba(201,162,78,0.1);
+    border: 1px solid rgba(201,162,78,0.25);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #D9C58E;
+    margin: 16px 0;
+  }
+  .privacy-note strong { color: var(--brass); }
+
+  .submit-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  button.primary {
+    background: var(--brass);
+    color: #1A1408;
+    border: none;
+    border-radius: 6px;
+    padding: 11px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'IBM Plex Sans', sans-serif;
+    cursor: pointer;
+  }
+  button.primary:hover { background: #DAB562; }
+  button.primary:disabled { background: #4A4636; color: var(--dim); cursor: not-allowed; }
+
+  button.ghost {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 8px 4px;
+  }
+  button.ghost:hover { color: var(--ink); }
+
+  /* Announcement banner */
+  .announcement {
+    background: var(--tag-other-bg);
+    border: 1px solid var(--tag-other);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .announcement .a-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--tag-other);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .announcement .a-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+  .announcement .a-dismiss {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--tag-other);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  /* Card grid */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    min-height: 140px;
+  }
+
+  .card-tag {
+    display: inline-flex;
+    align-self: flex-start;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .card[data-cat="Team Dynamics"] .card-tag { background: var(--tag-team-bg); color: var(--tag-team); }
+  .card[data-cat="Instagram & Resources"] .card-tag { background: var(--tag-insta-bg); color: var(--tag-insta); }
+  .card[data-cat="Program Ideas"] .card-tag { background: var(--tag-program-bg); color: var(--tag-program); }
+  .card[data-cat="Other"] .card-tag { background: var(--tag-other-bg); color: var(--tag-other); }
+
+  .card-body {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink);
+    white-space: pre-wrap;
+    margin-bottom: 14px;
+    flex-grow: 1;
+  }
+
+  .card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+  }
+  .upvote-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .upvote-btn:hover { border-color: var(--brass); }
+  .upvote-btn.voted { background: rgba(201,162,78,0.15); border-color: var(--brass); color: var(--brass); }
+  .upvote-btn .arrow { font-size: 10px; }
+
+  .timestamp {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .status-pill {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    margin-top: 8px;
+  }
+  .status-pill.resolved { color: var(--good); }
+  .status-pill.raised { color: var(--brass); }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .glyph { font-family: 'IBM Plex Mono', monospace; font-size: 28px; margin-bottom: 10px; color: var(--line); }
+  .empty-state p { font-size: 13.5px; max-width: 34ch; margin: 0 auto; line-height: 1.5; }
+
+  .loading { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+
+  .confirm-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    z-index: 150;
+  }
+
+  .footer-note {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--dim);
+    margin-top: 36px;
+    line-height: 1.6;
+  }
+
+  /* Mod view */
+  .mod-row {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--brass);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .mod-row .mod-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .mod-row .mod-author {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--brass);
+  }
+  .mod-row .mod-flags {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .mod-row .mod-text { font-size: 14px; line-height: 1.5; color: var(--ink); margin-bottom: 10px; white-space: pre-wrap; }
+  .mod-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mod-quick-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    background: var(--bg);
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  .mod-quick-btn:hover { border-color: var(--brass); color: var(--ink); }
+  .mod-quick-btn.active-seen { background: rgba(111,168,214,0.15); border-color: var(--tag-insta); color: var(--tag-insta); }
+  .mod-quick-btn.active-raised { background: rgba(201,162,78,0.15); border-color: var(--brass); color: var(--brass); }
+  .mod-quick-btn.active-resolved { background: rgba(127,190,140,0.15); border-color: var(--good); color: var(--good); }
+</style>
+</head>
+<body>
+
+<div class="epa-board" id="epaBoard">
+  <div class="wrap" id="wrapEl">
+    <div class="loading">loading&hellip;</div>
+  </div>
+  <div id="toastContainer"></div>
+</div>
+
+<script>
+(function() {
+  // ---------- Backend config ----------
+  // Paste your deployed Google Apps Script Web App URL here after deploying (see AppsScript.gs instructions).
+  const API_URL = "https://script.google.com/macros/s/AKfycbxB6FFacWY3-RioK1Kx6gv2L60-yfRHIkzEiSfIJ5HWXxHggUIWOs0pq2S0_4RuQgerVQ/exec";
+  const MOD_SECRET = "comms-eyes-ez"; 
+  const POLL_INTERVAL_MS = 18000;
+
+  async function apiCall(action, params) {
+    const body = new URLSearchParams({ action, ...params });
+    const res = await fetch(API_URL, { method: 'POST', body });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'API error');
+    return json.data;
+  }
+
+  const api = {
+    list: (isMod) => apiCall('list', isMod ? { modKey: MOD_SECRET } : {}),
+    submit: (entry) => apiCall('submit', { payload: JSON.stringify(entry) }),
+    upvote: (id, voterId) => apiCall('upvote', { id, voterId }),
+    setStatus: (id, status) => apiCall('setStatus', { id, status, modKey: MOD_SECRET }),
+    getAnnouncement: () => apiCall('getAnnouncement', {}),
+    setAnnouncement: (payload) => apiCall('setAnnouncement', { payload: JSON.stringify(payload), modKey: MOD_SECRET })
+  };
+
+  let allFeedback = [];
+  let announcement = null;
+  let currentSort = 'new';
+  let modUnlocked = false;
+  let selectedCategory = null;
+  let pendingPostToBoard = true;
+  let pendingAllowDisclose = false;
+  let pollTimer = null;
+
+  const wrapEl = document.getElementById('wrapEl');
+  const categories = ['Team Dynamics', 'Instagram & Resources', 'Program Ideas', 'Other'];
+  const statusLabels = { new: 'New', seen: 'Seen', raised: 'Raised to academic services', resolved: 'Resolved' };
+
+  function checkModAccess() {
+    return window.location.hash === '#comms-eyes' || modUnlocked;
+  }
+  let isMod = checkModAccess();
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return days + 'd ago';
+    return new Date(ts).toLocaleDateString();
+  }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'confirm-toast';
+    t.textContent = msg;
+    document.getElementById('toastContainer').appendChild(t);
+    setTimeout(() => t.remove(), 2600);
+  }
+
+  function renderShell() {
+    wrapEl.innerHTML = `
+      <div class="masthead">
+        <div>
+          <h1>EPA Feedback Board</h1>
+          <p>An always-open space for the ideas, gripes, and what-ifs on your mind about the team. Not a resource request line — this is about us.</p>
+        </div>
+        ${isMod ? '<div class="mod-tag">Moderator view</div>' : ''}
+      </div>
+
+      <div id="announcementSlot"></div>
+
+      <div class="toolbar">
+        <div class="toolbar-buttons">
+          <button class="create-btn" id="composeToggle">+ Share something</button>
+          ${isMod ? '<button class="announce-btn" id="announceToggle">Post announcement</button>' : ''}
+        </div>
+        <select class="sort-select" id="sortSelect">
+          <option value="new" ${currentSort === 'new' ? 'selected' : ''}>Newest</option>
+          <option value="top" ${currentSort === 'top' ? 'selected' : ''}>Top voted</option>
+        </select>
+      </div>
+
+      ${isMod ? '<div id="modFeed"></div>' : '<div class="card-grid" id="cardGrid"><div class="loading">loading&hellip;</div></div>'}
+
+      <div class="footer-note">
+        Submissions are reviewed by your Communications Specialist, who brings patterns and specific concerns to academic services without attaching names unless you've explicitly allowed it.
+        ${!isMod ? '<br><span id="modEntry" style="cursor:default;">&middot;</span>' : ''}
+      </div>
+    `;
+
+    document.getElementById('composeToggle').addEventListener('click', openComposeModal);
+    document.getElementById('sortSelect').addEventListener('change', (e) => { currentSort = e.target.value; render(); });
+    if (isMod) {
+      document.getElementById('announceToggle').addEventListener('click', openAnnounceModal);
+    } else {
+      const modEntry = document.getElementById('modEntry');
+      if (modEntry) {
+        let clickCount = 0;
+        let clickTimer = null;
+        modEntry.addEventListener('click', () => {
+          clickCount++;
+          if (clickTimer) clearTimeout(clickTimer);
+          clickTimer = setTimeout(() => { clickCount = 0; }, 1500);
+          if (clickCount >= 5) {
+            const pass = window.prompt('Moderator link:');
+            if (pass === 'comms-eyes') {
+              modUnlocked = true;
+              isMod = checkModAccess();
+              renderShell();
+              loadFeed();
+            }
+            clickCount = 0;
+          }
+        });
+      }
+    }
+  }
+
+  function renderAnnouncement() {
+    const slot = document.getElementById('announcementSlot');
+    if (!slot) return;
+    if (!announcement || !announcement.text) { slot.innerHTML = ''; return; }
+    if (!isMod) {
+      const dismissedAt = getDismissedTs();
+      if (dismissedAt && dismissedAt >= announcement.postedAt) { slot.innerHTML = ''; return; }
+    }
+    slot.innerHTML = `
+      <div class="announcement">
+        ${!isMod ? '<button class="a-dismiss" id="dismissAnnounce" aria-label="Dismiss">&times;</button>' : ''}
+        <span class="a-label">Announcement from your CS &middot; ${timeAgo(announcement.postedAt)}</span>
+        <div class="a-text">${escapeHtml(announcement.text)}</div>
+      </div>`;
+    if (!isMod) {
+      document.getElementById('dismissAnnounce').addEventListener('click', () => {
+        setDismissedTs(announcement.postedAt);
+        renderAnnouncement();
+      });
+    }
+  }
+
+  function getDismissedTs() {
+    try { return parseInt(sessionStorage.getItem('epafb_dismissed_announce') || '0', 10); } catch (e) { return 0; }
+  }
+  function setDismissedTs(ts) {
+    try { sessionStorage.setItem('epafb_dismissed_announce', String(ts)); } catch (e) {}
+  }
+
+  // ---------- Compose modal ----------
+  function openComposeModal() {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h2>Share something with the team</h2>
+        <span class="field-label">Your name</span>
+        <input type="text" id="mAuthor" placeholder="First and last name" />
+
+        <span class="field-label">What's on your mind</span>
+        <textarea id="mText" placeholder="I want to see more of... / I've noticed that... / It would help if..."></textarea>
+
+        <span class="field-label">Category</span>
+        <div class="category-row" id="mCategoryRow">
+          ${categories.map(c => `<div class="cat-chip" data-cat="${c}">${c}</div>`).join('')}
+        </div>
+
+        <div class="toggle-row">
+          <input type="checkbox" id="mPostToBoard" checked />
+          <label for="mPostToBoard">
+            Post this to the shared board
+            <span class="sub">Everyone can read it and upvote it — but never who wrote it. If unchecked, only your CS sees it, and it still gets tracked and followed up on.</span>
+          </label>
+        </div>
+
+        <div class="toggle-row">
+          <input type="checkbox" id="mAllowDisclose" />
+          <label for="mAllowDisclose">
+            OK to share my name with our supervisor, only if truly necessary
+            <span class="sub">Off by default. Your CS will never share your name without this checked, and even then, only when it's essential to act on your feedback.</span>
+          </label>
+        </div>
+
+        <div class="privacy-note">
+          <strong>How this works:</strong> Your name is never visible to other EPAs, no matter what you choose above. Your CS can always see who submitted what, so they can follow up with you directly if useful. By submitting, you're agreeing to this and trusting your CS to represent your input fairly.
+        </div>
+
+        <div class="submit-row">
+          <button class="ghost" id="mCancel">Cancel</button>
+          <button class="primary" id="mSubmit" disabled>Submit</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+
+    const mAuthor = backdrop.querySelector('#mAuthor');
+    const mText = backdrop.querySelector('#mText');
+    const mCategoryRow = backdrop.querySelector('#mCategoryRow');
+    const mSubmit = backdrop.querySelector('#mSubmit');
+    const mPostToBoard = backdrop.querySelector('#mPostToBoard');
+    const mAllowDisclose = backdrop.querySelector('#mAllowDisclose');
+    let localCategory = null;
+
+    function validate() {
+      mSubmit.disabled = !(mAuthor.value.trim().length > 0 && mText.value.trim().length > 3 && localCategory);
+    }
+    mAuthor.addEventListener('input', validate);
+    mText.addEventListener('input', validate);
+    mCategoryRow.addEventListener('click', (e) => {
+      const chip = e.target.closest('.cat-chip');
+      if (!chip) return;
+      [...mCategoryRow.children].forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      localCategory = chip.dataset.cat;
+      validate();
+    });
+
+    backdrop.querySelector('#mCancel').addEventListener('click', () => backdrop.remove());
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+
+    mSubmit.addEventListener('click', async () => {
+      const entry = {
+        id: 'fb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        text: mText.value.trim(),
+        category: localCategory,
+        author: mAuthor.value.trim(),
+        postToBoard: mPostToBoard.checked,
+        allowDisclose: mAllowDisclose.checked,
+        status: 'new',
+        upvotes: [],
+        createdAt: Date.now()
+      };
+      mSubmit.disabled = true;
+      mSubmit.textContent = 'Submitting…';
+      try {
+        await api.submit(entry);
+        showToast('Shared. Thank you for speaking up.');
+        backdrop.remove();
+        await loadFeed();
+      } catch (e) {
+        console.error(e);
+        showToast('Something went wrong — please try again.');
+        mSubmit.disabled = false;
+        mSubmit.textContent = 'Submit';
+      }
+    });
+  }
+
+  // ---------- Announcement modal (mod only) ----------
+  function openAnnounceModal() {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h2>Post an announcement</h2>
+        <span class="field-label">Message shown to all EPAs at the top of the board</span>
+        <textarea id="aText" placeholder="e.g. Thanks for the Instagram ideas last week — rolling two of them out this month.">${announcement ? escapeHtml(announcement.text) : ''}</textarea>
+        <div class="submit-row">
+          ${announcement ? '<button class="ghost" id="aClear">Clear announcement</button>' : ''}
+          <button class="ghost" id="aCancel">Cancel</button>
+          <button class="primary" id="aSubmit">Post</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    backdrop.querySelector('#aCancel').addEventListener('click', () => backdrop.remove());
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+
+    const clearBtn = backdrop.querySelector('#aClear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', async () => {
+        try {
+          await api.setAnnouncement({ text: '', postedAt: Date.now() });
+          announcement = null;
+          backdrop.remove();
+          renderAnnouncement();
+          showToast('Announcement cleared.');
+        } catch (e) { console.error(e); showToast('Could not clear — try again.'); }
+      });
+    }
+
+    backdrop.querySelector('#aSubmit').addEventListener('click', async () => {
+      const text = backdrop.querySelector('#aText').value.trim();
+      if (!text) { backdrop.remove(); return; }
+      const payload = { text, postedAt: Date.now() };
+      try {
+        await api.setAnnouncement(payload);
+        announcement = payload;
+        backdrop.remove();
+        renderAnnouncement();
+        showToast('Announcement posted.');
+      } catch (e) {
+        console.error(e);
+        showToast('Could not post — try again.');
+      }
+    });
+  }
+
+  // ---------- Data ----------
+  async function loadFeed() {
+    if (API_URL.indexOf('PASTE_YOUR') === 0) {
+      console.error('API_URL is not configured yet.');
+      allFeedback = [];
+      announcement = null;
+      render();
+      showToast('Backend not connected yet — set API_URL in the code.');
+      return;
+    }
+    try {
+      allFeedback = await api.list(isMod);
+    } catch (e) {
+      console.error('Failed to load feed', e);
+      allFeedback = [];
+    }
+
+    try {
+      announcement = await api.getAnnouncement();
+    } catch (e) {
+      announcement = null;
+    }
+
+    render();
+  }
+
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(() => {
+      // Don't yank the board out from under someone mid-write; just refresh quietly
+      loadFeed();
+    }, POLL_INTERVAL_MS);
+  }
+
+  function render() {
+    renderAnnouncement();
+    if (isMod) {
+      renderModFeed();
+    } else {
+      renderCardGrid();
+    }
+  }
+
+  function sortEntries(list) {
+    const copy = [...list];
+    if (currentSort === 'top') {
+      copy.sort((a, b) => (b.upvotes.length - a.upvotes.length) || (b.createdAt - a.createdAt));
+    } else {
+      copy.sort((a, b) => b.createdAt - a.createdAt);
+    }
+    return copy;
+  }
+
+  function renderCardGrid() {
+    const grid = document.getElementById('cardGrid');
+    if (!grid) return;
+    const visible = sortEntries(allFeedback.filter(f => f.postToBoard));
+
+    if (visible.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="glyph">&#9633;</div>
+          <p>Nothing here yet. Be the first to put something on the board — it's meant to be used.</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = visible.map(f => renderCard(f)).join('');
+    grid.querySelectorAll('.upvote-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleUpvote(btn.dataset.id));
+    });
+  }
+
+  function renderCard(f) {
+    const statusHtml = `<div class="status-pill ${f.status}">${statusLabels[f.status]}</div>`;
+    return `
+      <div class="card" data-cat="${f.category}">
+        <span class="card-tag">${escapeHtml(f.category)}</span>
+        <div class="card-body">${escapeHtml(f.text)}</div>
+        <div class="card-bottom">
+          <button class="upvote-btn" data-id="${f.id}">
+            <span class="arrow">&#9650;</span> ${f.upvotes.length}
+          </button>
+          <span class="timestamp">${timeAgo(f.createdAt)}</span>
+        </div>
+        ${statusHtml}
+      </div>`;
+  }
+
+  async function handleUpvote(id) {
+    let voterId;
+    try {
+      voterId = localStorage.getItem('epafb_voter_id');
+      if (!voterId) {
+        voterId = 'v_' + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem('epafb_voter_id', voterId);
+      }
+    } catch (e) {
+      voterId = 'v_session';
+    }
+    const entry = allFeedback.find(f => f.id === id);
+    if (!entry) return;
+    // optimistic UI update
+    const had = entry.upvotes.includes(voterId);
+    entry.upvotes = had ? entry.upvotes.filter(v => v !== voterId) : [...entry.upvotes, voterId];
+    render();
+    try {
+      await api.upvote(id, voterId);
+    } catch (e) {
+      console.error(e);
+      showToast('Could not save your vote — try again.');
+      // revert on failure
+      entry.upvotes = had ? [...entry.upvotes, voterId] : entry.upvotes.filter(v => v !== voterId);
+      render();
+    }
+  }
+
+  function renderModFeed() {
+    const modFeed = document.getElementById('modFeed');
+    if (!modFeed) return;
+    const visible = sortEntries(allFeedback);
+
+    if (visible.length === 0) {
+      modFeed.innerHTML = `
+        <div class="empty-state">
+          <div class="glyph">&#9633;</div>
+          <p>No submissions yet.</p>
+        </div>`;
+      return;
+    }
+
+    modFeed.innerHTML = visible.map(f => `
+      <div class="mod-row">
+        <div class="mod-top">
+          <span class="mod-author">${escapeHtml(f.author)}</span>
+          <span class="mod-flags">
+            ${escapeHtml(f.category)} &middot;
+            ${f.postToBoard ? 'on board' : 'private'} &middot;
+            ${f.allowDisclose ? 'may disclose to supervisor' : 'no disclosure'} &middot;
+            ${f.upvotes.length} upvote${f.upvotes.length === 1 ? '' : 's'} &middot;
+            ${timeAgo(f.createdAt)}
+          </span>
+        </div>
+        <div class="mod-text">${escapeHtml(f.text)}</div>
+        <div class="mod-actions">
+          <button class="mod-quick-btn ${f.status==='seen' ? 'active-seen' : ''}" data-id="${f.id}" data-status="seen">Mark seen</button>
+          <button class="mod-quick-btn ${f.status==='raised' ? 'active-raised' : ''}" data-id="${f.id}" data-status="raised">Raised to academic services</button>
+          <button class="mod-quick-btn ${f.status==='resolved' ? 'active-resolved' : ''}" data-id="${f.id}" data-status="resolved">Resolved</button>
+          ${f.status !== 'new' ? `<button class="mod-quick-btn" data-id="${f.id}" data-status="new">Reset to new</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    modFeed.querySelectorAll('.mod-quick-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleStatusChange(btn.dataset.id, btn.dataset.status));
+    });
+  }
+
+  async function handleStatusChange(id, newStatus) {
+    const entry = allFeedback.find(f => f.id === id);
+    if (!entry) return;
+    const prevStatus = entry.status;
+    entry.status = newStatus;
+    render();
+    try {
+      await api.setStatus(id, newStatus);
+      showToast('Status updated.');
+    } catch (e) {
+      console.error(e);
+      showToast('Could not update status — try again.');
+      entry.status = prevStatus;
+      render();
+    }
+  }
+
+  (async function init() {
+    try {
+      renderShell();
+      await loadFeed();
+      startPolling();
+    } catch (e) {
+      console.error('Init failed', e);
+      wrapEl.innerHTML = '<div class="loading">Something went wrong loading the board. Check the console for details.</div>';
+    }
+  })();
+})();
+</script>
+
+</body>
+</html>
