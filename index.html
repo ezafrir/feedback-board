@@ -562,6 +562,148 @@
   .mod-quick-btn.active-seen { background: rgba(111,168,214,0.15); border-color: var(--tag-insta); color: var(--tag-insta); }
   .mod-quick-btn.active-raised { background: rgba(201,162,78,0.15); border-color: var(--brass); color: var(--brass); }
   .mod-quick-btn.active-resolved { background: rgba(127,190,140,0.15); border-color: var(--good); color: var(--good); }
+
+  /* Clickable cards */
+  .card { cursor: pointer; transition: border-color 0.12s ease; }
+  .card:hover { border-color: var(--brass); }
+
+  .card-title {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 6px;
+    line-height: 1.35;
+  }
+
+  .card-preview {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    margin-bottom: 14px;
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Detail modal */
+  .detail-modal {
+    max-width: 560px;
+  }
+  .detail-header {
+    margin-bottom: 4px;
+  }
+  .detail-title {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    color: var(--ink);
+    margin: 10px 0 12px 0;
+    line-height: 1.3;
+  }
+  .detail-body {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--ink);
+    white-space: pre-wrap;
+    margin-bottom: 16px;
+  }
+  .detail-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+  }
+  .detail-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .detail-close:hover { color: var(--ink); }
+
+  /* Comments */
+  .comments-section h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0 0 12px 0;
+    font-weight: 600;
+  }
+  .comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .comment-row {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .comment-text {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink);
+    white-space: pre-wrap;
+    flex: 1;
+  }
+  .comment-meta {
+    font-size: 10.5px;
+    color: var(--dim);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 4px;
+  }
+  .comment-upvote {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 3px 9px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .comment-upvote:hover { border-color: var(--brass); }
+  .comment-upvote.voted { background: rgba(201,162,78,0.15); border-color: var(--brass); color: var(--brass); }
+  .no-comments {
+    font-size: 13px;
+    color: var(--dim);
+    font-style: italic;
+    margin-bottom: 16px;
+  }
+  .comment-compose {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .comment-compose textarea {
+    margin-bottom: 0;
+    min-height: 44px;
+  }
+  .comment-compose button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -570,7 +712,7 @@
   <div class="lock-box">
     <h1>EPA Feedback Board</h1>
     <p>Enter the team passphrase to continue.</p>
-    <input type="password" id="lockInput" placeholder="Team passphrase" autocomplete="off" />
+    <input type="text" id="lockInput" name="epa_gate_field" placeholder="Team passphrase" autocomplete="off" style="-webkit-text-security: disc; text-security: disc;" />
     <button class="primary" id="lockSubmit">Enter</button>
     <div class="lock-error" id="lockError" style="display:none;">That's not it — try again.</div>
   </div>
@@ -606,7 +748,9 @@
     upvote: (id, voterId) => apiCall('upvote', { id, voterId }),
     setStatus: (id, status) => apiCall('setStatus', { id, status, modKey: MOD_SECRET }),
     getAnnouncement: () => apiCall('getAnnouncement', {}),
-    setAnnouncement: (payload) => apiCall('setAnnouncement', { payload: JSON.stringify(payload), modKey: MOD_SECRET })
+    setAnnouncement: (payload) => apiCall('setAnnouncement', { payload: JSON.stringify(payload), modKey: MOD_SECRET }),
+    addComment: (entryId, comment) => apiCall('addComment', { entryId, payload: JSON.stringify(comment) }),
+    upvoteComment: (entryId, commentId, voterId) => apiCall('upvoteComment', { entryId, commentId, voterId })
   };
 
   let allFeedback = [];
@@ -750,9 +894,12 @@
         <h2>Share your feedback</h2>
         <span class="sub">Share an idea, concern, observation, or suggestion about the EPA program.</span>
         <span class="field-label">Your name</span>
-        <input type="text" id="mAuthor" placeholder="Only your CS can see this" />
+        <input type="text" id="mAuthor" name="epa_author_field" placeholder="Only your CS can see this" autocomplete="off" />
 
-        <span class="field-label">What's on your mind</span>
+        <span class="field-label">Title</span>
+        <input type="text" id="mTitle" name="epa_title_field" placeholder="A short summary of your feedback" autocomplete="off" />
+
+        <span class="field-label">Details</span>
         <textarea id="mText" placeholder="I think we could… / I’ve noticed… / I wish we had… / It would help if…"></textarea>
 
         <span class="field-label">Category</span>
@@ -789,6 +936,7 @@
     document.body.appendChild(backdrop);
 
     const mAuthor = backdrop.querySelector('#mAuthor');
+    const mTitle = backdrop.querySelector('#mTitle');
     const mText = backdrop.querySelector('#mText');
     const mCategoryRow = backdrop.querySelector('#mCategoryRow');
     const mSubmit = backdrop.querySelector('#mSubmit');
@@ -797,9 +945,10 @@
     let localCategory = null;
 
     function validate() {
-      mSubmit.disabled = !(mAuthor.value.trim().length > 0 && mText.value.trim().length > 3 && localCategory);
+      mSubmit.disabled = !(mAuthor.value.trim().length > 0 && mTitle.value.trim().length > 0 && mText.value.trim().length > 3 && localCategory);
     }
     mAuthor.addEventListener('input', validate);
+    mTitle.addEventListener('input', validate);
     mText.addEventListener('input', validate);
     mCategoryRow.addEventListener('click', (e) => {
       const chip = e.target.closest('.cat-chip');
@@ -816,6 +965,7 @@
     mSubmit.addEventListener('click', async () => {
       const entry = {
         id: 'fb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        title: mTitle.value.trim(),
         text: mText.value.trim(),
         category: localCategory,
         author: mAuthor.value.trim(),
@@ -823,6 +973,7 @@
         allowDisclose: mAllowDisclose.checked,
         status: 'new',
         upvotes: [],
+        comments: [],
         createdAt: Date.now()
       };
       mSubmit.disabled = true;
@@ -888,6 +1039,140 @@
         console.error(e);
         showToast('Could not post — try again.');
       }
+    });
+  }
+
+  // ---------- Detail modal (view + comments) ----------
+  function openDetailModal(id) {
+    const entry = allFeedback.find(f => f.id === id);
+    if (!entry) return;
+    if (!entry.comments) entry.comments = [];
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal detail-modal" style="position:relative;">
+        <button class="detail-close" id="dClose" aria-label="Close">&times;</button>
+        <div class="detail-header">
+          <span class="card-tag">${escapeHtml(entry.category)}</span>
+        </div>
+        ${entry.title ? `<div class="detail-title">${escapeHtml(entry.title)}</div>` : ''}
+        <div class="detail-body">${escapeHtml(entry.text)}</div>
+        <div class="detail-meta-row">
+          <button class="upvote-btn" id="dUpvote" data-id="${entry.id}">
+            <span class="arrow">&#9650;</span> <span id="dUpvoteCount">${entry.upvotes.length}</span>
+          </button>
+          <span class="timestamp">${timeAgo(entry.createdAt)}</span>
+        </div>
+        <div class="comments-section">
+          <h3>Comments</h3>
+          <div class="comment-list" id="dCommentList"></div>
+          <div class="comment-compose">
+            <textarea id="dCommentText" placeholder="Add a comment…" rows="1"></textarea>
+            <button class="primary" id="dCommentSubmit">Post</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+
+    backdrop.querySelector('#dClose').addEventListener('click', () => backdrop.remove());
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) backdrop.remove(); });
+
+    backdrop.querySelector('#dUpvote').addEventListener('click', async () => {
+      await handleUpvote(entry.id);
+      const fresh = allFeedback.find(f => f.id === id);
+      if (fresh) {
+        backdrop.querySelector('#dUpvoteCount').textContent = fresh.upvotes.length;
+        backdrop.querySelector('#dUpvote').classList.toggle('voted', isVotedByMe(fresh.upvotes));
+      }
+    });
+
+    renderCommentList(backdrop, entry);
+
+    backdrop.querySelector('#dCommentSubmit').addEventListener('click', async () => {
+      const textEl = backdrop.querySelector('#dCommentText');
+      const text = textEl.value.trim();
+      if (!text) return;
+      const submitBtn = backdrop.querySelector('#dCommentSubmit');
+      submitBtn.disabled = true;
+      const comment = {
+        id: 'cm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        text,
+        upvotes: [],
+        createdAt: Date.now()
+      };
+      try {
+        await api.addComment(entry.id, comment);
+        entry.comments = entry.comments || [];
+        entry.comments.push(comment);
+        textEl.value = '';
+        renderCommentList(backdrop, entry);
+      } catch (e) {
+        console.error(e);
+        showToast('Could not post comment — try again.');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  function getVoterId() {
+    let voterId;
+    try {
+      voterId = localStorage.getItem('epafb_voter_id');
+      if (!voterId) {
+        voterId = 'v_' + Math.random().toString(36).slice(2, 10);
+        localStorage.setItem('epafb_voter_id', voterId);
+      }
+    } catch (e) {
+      voterId = 'v_session';
+    }
+    return voterId;
+  }
+
+  function isVotedByMe(upvotesArr) {
+    return upvotesArr.includes(getVoterId());
+  }
+
+  function renderCommentList(backdrop, entry) {
+    const list = backdrop.querySelector('#dCommentList');
+    const comments = entry.comments || [];
+    if (comments.length === 0) {
+      list.innerHTML = `<div class="no-comments">No comments yet — be the first to weigh in.</div>`;
+      return;
+    }
+    const sorted = [...comments].sort((a, b) => (b.upvotes.length - a.upvotes.length) || (a.createdAt - b.createdAt));
+    list.innerHTML = sorted.map(c => `
+      <div class="comment-row">
+        <div>
+          <div class="comment-text">${escapeHtml(c.text)}</div>
+          <div class="comment-meta">${timeAgo(c.createdAt)}</div>
+        </div>
+        <button class="comment-upvote ${isVotedByMe(c.upvotes) ? 'voted' : ''}" data-comment-id="${c.id}">
+          <span class="arrow">&#9650;</span> ${c.upvotes.length}
+        </button>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.comment-upvote').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const commentId = btn.dataset.commentId;
+        const voterId = getVoterId();
+        const comment = entry.comments.find(c => c.id === commentId);
+        if (!comment) return;
+        const had = comment.upvotes.includes(voterId);
+        comment.upvotes = had ? comment.upvotes.filter(v => v !== voterId) : [...comment.upvotes, voterId];
+        renderCommentList(backdrop, entry);
+        try {
+          await api.upvoteComment(entry.id, commentId, voterId);
+        } catch (e) {
+          console.error(e);
+          showToast('Could not save your vote — try again.');
+          comment.upvotes = had ? [...comment.upvotes, voterId] : comment.upvotes.filter(v => v !== voterId);
+          renderCommentList(backdrop, entry);
+        }
+      });
     });
   }
 
@@ -960,16 +1245,21 @@
 
     grid.innerHTML = visible.map(f => renderCard(f)).join('');
     grid.querySelectorAll('.upvote-btn').forEach(btn => {
-      btn.addEventListener('click', () => handleUpvote(btn.dataset.id));
+      btn.addEventListener('click', (e) => { e.stopPropagation(); handleUpvote(btn.dataset.id); });
+    });
+    grid.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => openDetailModal(card.dataset.id));
     });
   }
 
   function renderCard(f) {
     const statusHtml = `<div class="status-pill ${f.status}">${statusLabels[f.status]}</div>`;
+    const title = f.title ? escapeHtml(f.title) : '';
     return `
-      <div class="card" data-cat="${f.category}">
+      <div class="card" data-cat="${f.category}" data-id="${f.id}">
         <span class="card-tag">${escapeHtml(f.category)}</span>
-        <div class="card-body">${escapeHtml(f.text)}</div>
+        ${title ? `<div class="card-title">${title}</div>` : ''}
+        <div class="card-preview">${escapeHtml(f.text)}</div>
         <div class="card-bottom">
           <button class="upvote-btn" data-id="${f.id}">
             <span class="arrow">&#9650;</span> ${f.upvotes.length}
@@ -981,16 +1271,7 @@
   }
 
   async function handleUpvote(id) {
-    let voterId;
-    try {
-      voterId = localStorage.getItem('epafb_voter_id');
-      if (!voterId) {
-        voterId = 'v_' + Math.random().toString(36).slice(2, 10);
-        localStorage.setItem('epafb_voter_id', voterId);
-      }
-    } catch (e) {
-      voterId = 'v_session';
-    }
+    const voterId = getVoterId();
     const entry = allFeedback.find(f => f.id === id);
     if (!entry) return;
     // optimistic UI update
@@ -1031,9 +1312,11 @@
             ${f.postToBoard ? 'on board' : 'private'} &middot;
             ${f.allowDisclose ? 'may disclose to supervisor' : 'no disclosure'} &middot;
             ${f.upvotes.length} upvote${f.upvotes.length === 1 ? '' : 's'} &middot;
+            ${(f.comments || []).length} comment${(f.comments || []).length === 1 ? '' : 's'} &middot;
             ${timeAgo(f.createdAt)}
           </span>
         </div>
+        ${f.title ? `<div style="font-weight:600; margin-bottom:6px; color: var(--ink); font-size:14.5px;">${escapeHtml(f.title)}</div>` : ''}
         <div class="mod-text">${escapeHtml(f.text)}</div>
         <div class="mod-actions">
           <button class="mod-quick-btn ${f.status==='seen' ? 'active-seen' : ''}" data-id="${f.id}" data-status="seen">Mark seen</button>
