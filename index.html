@@ -606,7 +606,7 @@
       <div class="masthead">
         <div>
           <h1>EPA Feedback Board</h1>
-          <p>An always-open space for the ideas, gripes, and what-ifs on your mind about the team. Not a resource request line — this is about us.</p>
+          <p>This is a space for EPA voices, ideas, and experiences. Share what you think could make the EPA program better! What do you want to see more of, less of, or done differently? EPAs bring different experiences from across SOE, and those perspectives should help shape the program we’re part of.</p>
         </div>
         ${isMod ? '<div class="mod-tag">Moderator view</div>' : ''}
       </div>
@@ -627,7 +627,7 @@
       ${isMod ? '<div id="modFeed"></div>' : '<div class="card-grid" id="cardGrid"><div class="loading">loading&hellip;</div></div>'}
 
       <div class="footer-note">
-        Submissions are reviewed by your Communications Specialist, who brings patterns and specific concerns to academic services without attaching names unless you've explicitly allowed it.
+        Your Communications Specialist will review submissions, identify shared concerns and ideas, and relay EPA feedback to our supervisors. Your name is never shared unless you explicitly give permission. Upvotes help show when an idea or concern is shared by multiple EPAs.
         ${!isMod ? '<br><span id="modEntry" style="cursor:default;">&middot;</span>' : ''}
       </div>
     `;
@@ -695,12 +695,13 @@
     backdrop.className = 'modal-backdrop';
     backdrop.innerHTML = `
       <div class="modal">
-        <h2>Share something with the team</h2>
+        <h2>Share your feedback</h2>
+        <span class="sub">Share an idea, concern, observation, or suggestion about the EPA program.</span>
         <span class="field-label">Your name</span>
-        <input type="text" id="mAuthor" placeholder="First and last name" />
+        <input type="text" id="mAuthor" placeholder="Only your CS can see this" />
 
         <span class="field-label">What's on your mind</span>
-        <textarea id="mText" placeholder="I want to see more of... / I've noticed that... / It would help if..."></textarea>
+        <textarea id="mText" placeholder="I think we could… / I’ve noticed… / I wish we had… / It would help if…"></textarea>
 
         <span class="field-label">Category</span>
         <div class="category-row" id="mCategoryRow">
@@ -711,20 +712,20 @@
           <input type="checkbox" id="mPostToBoard" checked />
           <label for="mPostToBoard">
             Post this to the shared board
-            <span class="sub">Everyone can read it and upvote it — but never who wrote it. If unchecked, only your CS sees it, and it still gets tracked and followed up on.</span>
+            <span class="sub">Your feedback will appear anonymously on the board, where other EPAs can read and upvote it. Your name will never be shown. If you leave this unchecked, your feedback will stay private between you and the Communications Specialist.</span>
           </label>
         </div>
 
         <div class="toggle-row">
           <input type="checkbox" id="mAllowDisclose" />
           <label for="mAllowDisclose">
-            OK to share my name with our supervisor, only if truly necessary
+            OK to share my name with our supervisor
             <span class="sub">Off by default. Your CS will never share your name without this checked, and even then, only when it's essential to act on your feedback.</span>
           </label>
         </div>
 
         <div class="privacy-note">
-          <strong>How this works:</strong> Your name is never visible to other EPAs, no matter what you choose above. Your CS can always see who submitted what, so they can follow up with you directly if useful. By submitting, you're agreeing to this and trusting your CS to represent your input fairly.
+          <strong>How this works:</strong> Your name is never visible to other EPAs, no matter what you choose above. Your Communications Specialist can see your name so they can follow up with you when helpful, but your identity will not be shared with supervisors unless you give permission above. Feedback may be shared individually or as part of broader patterns raised by the EPA team.
         </div>
 
         <div class="submit-row">
@@ -900,7 +901,7 @@
       grid.innerHTML = `
         <div class="empty-state">
           <div class="glyph">&#9633;</div>
-          <p>Nothing here yet. Be the first to put something on the board — it's meant to be used.</p>
+          <p>Share an idea, suggestion, concern, or something you’d like to see change.</p>
         </div>`;
       return;
     }
