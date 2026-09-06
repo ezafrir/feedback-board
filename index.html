@@ -18,10 +18,14 @@
     --muted: #9297A5;
     --dim: #676D7C;
 
-    --tag-team: #C4738A;
-    --tag-team-bg: #33222A;
-    --tag-insta: #6FA8D6;
-    --tag-insta-bg: #1E2A36;
+    --tag-experience: #C4738A;
+    --tag-experience-bg: #33222A;
+    --tag-team: #9B86D8;
+    --tag-team-bg: #29243A;
+    --tag-social: #6FA8D6;
+    --tag-social-bg: #1E2A36;
+    --tag-resources: #5FB8A6;
+    --tag-resources-bg: #1D302C;
     --tag-program: #7FBE8C;
     --tag-program-bg: #1E2E23;
     --tag-other: #C9A24E;
@@ -255,8 +259,10 @@
     color: var(--muted);
     cursor: pointer;
   }
-  .cat-chip[data-cat="Team Dynamics"].active { background: var(--tag-team-bg); border-color: var(--tag-team); color: var(--tag-team); }
-  .cat-chip[data-cat="Instagram & Resources"].active { background: var(--tag-insta-bg); border-color: var(--tag-insta); color: var(--tag-insta); }
+  .cat-chip[data-cat="EPA Experience"].active { background: var(--tag-experience-bg); border-color: var(--tag-experience); color: var(--tag-experience); }
+  .cat-chip[data-cat="Team & Communication"].active { background: var(--tag-team-bg); border-color: var(--tag-team); color: var(--tag-team); }
+  .cat-chip[data-cat="Social Media"].active { background: var(--tag-social-bg); border-color: var(--tag-social); color: var(--tag-social); }
+  .cat-chip[data-cat="Resources & Advising"].active { background: var(--tag-resources-bg); border-color: var(--tag-resources); color: var(--tag-resources); }
   .cat-chip[data-cat="Program Ideas"].active { background: var(--tag-program-bg); border-color: var(--tag-program); color: var(--tag-program); }
   .cat-chip[data-cat="Other"].active { background: var(--tag-other-bg); border-color: var(--tag-other); color: var(--tag-other); }
 
@@ -382,8 +388,10 @@
     border-radius: 20px;
     margin-bottom: 10px;
   }
-  .card[data-cat="Team Dynamics"] .card-tag { background: var(--tag-team-bg); color: var(--tag-team); }
-  .card[data-cat="Instagram & Resources"] .card-tag { background: var(--tag-insta-bg); color: var(--tag-insta); }
+  .card[data-cat="EPA Experience"] .card-tag { background: var(--tag-experience-bg); color: var(--tag-experience); }
+  .card[data-cat="Team & Communication"] .card-tag { background: var(--tag-team-bg); color: var(--tag-team); }
+  .card[data-cat="Social Media"] .card-tag { background: var(--tag-social-bg); color: var(--tag-social); }
+  .card[data-cat="Resources & Advising"] .card-tag { background: var(--tag-resources-bg); color: var(--tag-resources); }
   .card[data-cat="Program Ideas"] .card-tag { background: var(--tag-program-bg); color: var(--tag-program); }
   .card[data-cat="Other"] .card-tag { background: var(--tag-other-bg); color: var(--tag-other); }
 
