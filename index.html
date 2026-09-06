@@ -31,6 +31,62 @@
     --brass: #C9A24E;
   }
 
+  .lock-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .lock-box {
+    text-align: center;
+    max-width: 320px;
+    padding: 20px;
+  }
+  .lock-box h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    color: var(--ink);
+    margin: 0 0 8px 0;
+  }
+  .lock-box p {
+    color: var(--muted);
+    font-size: 13.5px;
+    margin: 0 0 20px 0;
+  }
+  .lock-box input {
+    width: 100%;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 6px;
+    padding: 11px 12px;
+    font-size: 14.5px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .lock-box input:focus { outline: 2px solid var(--brass); outline-offset: 1px; }
+  .lock-box button.primary {
+    width: 100%;
+    background: var(--brass);
+    color: #1A1408;
+    border: none;
+    border-radius: 6px;
+    padding: 11px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .lock-box button.primary:hover { background: #DAB562; }
+  .lock-error {
+    color: var(--tag-team);
+    font-size: 12.5px;
+    margin-top: 10px;
+  }
+
   #epaBoard {
     font-family: 'IBM Plex Sans', sans-serif;
     background: var(--bg);
@@ -458,7 +514,17 @@
 </head>
 <body>
 
-<div class="epa-board" id="epaBoard">
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-box">
+    <h1>EPA Feedback Board</h1>
+    <p>Enter the team passphrase to continue.</p>
+    <input type="password" id="lockInput" placeholder="Team passphrase" autocomplete="off" />
+    <button class="primary" id="lockSubmit">Enter</button>
+    <div class="lock-error" id="lockError" style="display:none;">That's not it — try again.</div>
+  </div>
+</div>
+
+<div class="epa-board" id="epaBoard" style="display:none;">
   <div class="wrap" id="wrapEl">
     <div class="loading">loading&hellip;</div>
   </div>
@@ -471,6 +537,7 @@
   // Paste your deployed Google Apps Script Web App URL here after deploying (see AppsScript.gs instructions).
   const API_URL = "https://script.google.com/macros/s/AKfycbxB6FFacWY3-RioK1Kx6gv2L60-yfRHIkzEiSfIJ5HWXxHggUIWOs0pq2S0_4RuQgerVQ/exec";
   const MOD_SECRET = "comms-eyes-ez"; 
+  const TEAM_PASSPHRASE = "EPAs-20267986572"; 
   const POLL_INTERVAL_MS = 18000;
 
   async function apiCall(action, params) {
@@ -946,7 +1013,43 @@
     }
   }
 
-  (async function init() {
+  function unlockBoard() {
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('epaBoard').style.display = 'block';
+    initBoard();
+  }
+
+  function checkStoredUnlock() {
+    try {
+      return sessionStorage.getItem('epafb_unlocked') === 'true';
+    } catch (e) { return false; }
+  }
+
+  function setupLockScreen() {
+    if (checkStoredUnlock()) {
+      unlockBoard();
+      return;
+    }
+    const input = document.getElementById('lockInput');
+    const submitBtn = document.getElementById('lockSubmit');
+    const errorEl = document.getElementById('lockError');
+
+    function tryUnlock() {
+      if (input.value === TEAM_PASSPHRASE) {
+        try { sessionStorage.setItem('epafb_unlocked', 'true'); } catch (e) {}
+        unlockBoard();
+      } else {
+        errorEl.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    }
+    submitBtn.addEventListener('click', tryUnlock);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+    input.focus();
+  }
+
+  async function initBoard() {
     try {
       renderShell();
       await loadFeed();
@@ -955,7 +1058,9 @@
       console.error('Init failed', e);
       wrapEl.innerHTML = '<div class="loading">Something went wrong loading the board. Check the console for details.</div>';
     }
-  })();
+  }
+
+  setupLockScreen();
 })();
 </script>
 
