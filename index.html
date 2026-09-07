@@ -127,7 +127,7 @@
     margin: 0;
     font-size: 13.5px;
     color: var(--muted);
-    max-width: 48ch;
+    max-width: 300ch;
     line-height: 1.5;
   }
   .masthead .mod-tag {
@@ -432,12 +432,18 @@
     border-radius: 20px;
     margin-bottom: 10px;
   }
-  .card[data-cat="EPA Experience"] .card-tag { background: var(--tag-experience-bg); color: var(--tag-experience); }
-  .card[data-cat="Team & Communication"] .card-tag { background: var(--tag-team-bg); color: var(--tag-team); }
-  .card[data-cat="Social Media"] .card-tag { background: var(--tag-social-bg); color: var(--tag-social); }
-  .card[data-cat="Resources & Advising"] .card-tag { background: var(--tag-resources-bg); color: var(--tag-resources); }
-  .card[data-cat="Program Ideas"] .card-tag { background: var(--tag-program-bg); color: var(--tag-program); }
-  .card[data-cat="Other"] .card-tag { background: var(--tag-other-bg); color: var(--tag-other); }
+  .card[data-cat="EPA Experience"] .card-tag,
+  .card-tag[data-cat="EPA Experience"] { background: var(--tag-experience-bg); color: var(--tag-experience); }
+  .card[data-cat="Team & Communication"] .card-tag,
+  .card-tag[data-cat="Team & Communication"] { background: var(--tag-team-bg); color: var(--tag-team); }
+  .card[data-cat="Social Media"] .card-tag,
+  .card-tag[data-cat="Social Media"] { background: var(--tag-social-bg); color: var(--tag-social); }
+  .card[data-cat="Resources & Advising"] .card-tag,
+  .card-tag[data-cat="Resources & Advising"] { background: var(--tag-resources-bg); color: var(--tag-resources); }
+  .card[data-cat="Program Ideas"] .card-tag,
+  .card-tag[data-cat="Program Ideas"] { background: var(--tag-program-bg); color: var(--tag-program); }
+  .card[data-cat="Other"] .card-tag,
+  .card-tag[data-cat="Other"] { background: var(--tag-other-bg); color: var(--tag-other); }
 
   .card-body {
     font-size: 14px;
@@ -1054,7 +1060,7 @@
       <div class="modal detail-modal" style="position:relative;">
         <button class="detail-close" id="dClose" aria-label="Close">&times;</button>
         <div class="detail-header">
-          <span class="card-tag">${escapeHtml(entry.category)}</span>
+          <span class="card-tag" data-cat="${entry.category}">${escapeHtml(entry.category)}</span>
         </div>
         ${entry.title ? `<div class="detail-title">${escapeHtml(entry.title)}</div>` : ''}
         <div class="detail-body">${escapeHtml(entry.text)}</div>
@@ -1139,7 +1145,7 @@
     const list = backdrop.querySelector('#dCommentList');
     const comments = entry.comments || [];
     if (comments.length === 0) {
-      list.innerHTML = `<div class="no-comments">No comments yet — be the first to weigh in.</div>`;
+      list.innerHTML = `<div class="no-comments">No comments yet!</div>`;
       return;
     }
     const sorted = [...comments].sort((a, b) => (b.upvotes.length - a.upvotes.length) || (a.createdAt - b.createdAt));
@@ -1257,7 +1263,7 @@
     const title = f.title ? escapeHtml(f.title) : '';
     return `
       <div class="card" data-cat="${f.category}" data-id="${f.id}">
-        <span class="card-tag">${escapeHtml(f.category)}</span>
+        <span class="card-tag" data-cat="${f.category}">${escapeHtml(f.category)}</span>
         ${title ? `<div class="card-title">${title}</div>` : ''}
         <div class="card-preview">${escapeHtml(f.text)}</div>
         <div class="card-bottom">
